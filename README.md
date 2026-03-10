@@ -17,6 +17,12 @@ In high-power-density electric drives, the **stator winding temperature (`stator
 
 Because physical thermocouples embedded within the stator are costly, prone to mechanical failure, and often unfeasible in mass-production environments, this project develops a **software-based temperature sensor (Soft-Sensor)**. 
 
+<p align="center">
+  <img src="assets/hysteresis_map.png" alt="Thermal Hysteresis Map" width="600"/>
+  <br>
+  <em>Figure 1: Thermal Hysteresis demonstrating the massive dispersion between instantaneous power and temperature, highlighting the fundamental need for sequence memory.</em>
+</p>
+
 The core architectural hypothesis of this repository is physically rooted: 
 *Instead of relying on static tabular features and manually engineered rolling windows, a Deep Sequence Model (GRU) can natively learn a latent "thermal memory" that accurately reflects heat accumulation and dissipation dynamics.*
 
@@ -32,17 +38,29 @@ We operate under strict industrial realism. The model must predict internal temp
 
 The most critical point of failure in time-series machine learning is temporal autocorrelation (data leakage). Because each driving profile represents a unique, causally independent trajectory with varying initial thermal states, standard randomized cross-validation is mathematically invalid.
 
+<p align="center">
+  <img src="assets/operating_regimes.png" alt="Speed-Torque Phase Space" width="600"/>
+  <br>
+  <em>Figure 2: Electromechanical phase space (Speed vs. Torque) segmented via Unsupervised Learning (K-Means). Identifying these foundational thermodynamic regimes dictates our stratified validation strategy, ensuring the Soft-Sensor performs reliably across traction, braking, and coasting states.</em>
+</p>
+
 To guarantee industrial-grade reliability, this pipeline enforces **Strict Group-Aware Validation**:
 * **GroupShuffleSplit & GroupKFold:** All splits are executed strictly by `profile_id`. A driving session is either entirely in the training set or entirely in the validation/test set.
 * **Causal Windowing:** Sequence generation is strictly bounded within individual profiles. Temporal windows never cross session boundaries.
 
 ```mermaid
 flowchart TD
-A[Raw data] --> B[EDA]
-B --> C[Feature engineering]
-C --> D[Regime discovery]
-D --> E[ML baseline]
-E --> F[GRU sequence model]
+    A[(Raw Telemetry CSV)] -->|Polars| B[01: EDA & Phase Space]
+    B --> C[02: Causal Feature Eng.]
+    C -->|Parquet Export| D[03: Regime Discovery KMeans]
+    
+    D --> E{Modeling Track}
+    
+    E -->|Static / Tabular| F[04: HistGB Baseline]
+    E -->|Sequential / Deep| G[05: GRU Sequence Model]
+    
+    F --> H([Stratified Group Evaluation])
+    G --> H
 ```
 
 ## 4. Architectural Evolution: Tabular vs. Sequential
@@ -64,6 +82,12 @@ All deep learning metrics are reported as the mean and standard deviation across
 | Persistence Baseline | Group Holdout | 12.45 | 18.20 | 0.000 |
 | HistGB (Engineered Features) | GroupKFold | 5.91 | 8.10 | 0.921 |
 | **GRU (Raw Sequences, W=300)** | **Multi-Seed Holdout** | **4.27 ± 0.15** | **6.27 ± 0.07** | **0.957** |
+
+<p align="center">
+  <img src="assets/gru_prediction_trajectory.png" alt="GRU Prediction vs Ground Truth" width="700"/>
+  <br>
+  <em>Figure 3: Temporal tracking of the stator winding temperature by the GRU Soft-Sensor on an unseen test profile. The model successfully captures the thermal inertia and rapid transient dynamics without access to internal mass temperatures.</em>
+</p>
 
 **Physical Interpretability (Permutation Importance):**
 An audit of the GRU confirms its alignment with electromagnetic principles:
