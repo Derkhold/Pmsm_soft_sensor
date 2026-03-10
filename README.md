@@ -36,6 +36,15 @@ To guarantee industrial-grade reliability, this pipeline enforces **Strict Group
 * **GroupShuffleSplit & GroupKFold:** All splits are executed strictly by `profile_id`. A driving session is either entirely in the training set or entirely in the validation/test set.
 * **Causal Windowing:** Sequence generation is strictly bounded within individual profiles. Temporal windows never cross session boundaries.
 
+```mermaid
+flowchart TD
+A[Raw data] --> B[EDA]
+B --> C[Feature engineering]
+C --> D[Regime discovery]
+D --> E[ML baseline]
+E --> F[GRU sequence model]
+```
+
 ## 4. Architectural Evolution: Tabular vs. Sequential
 
 ### Phase 1: The Statistical Baseline (HistGB)
