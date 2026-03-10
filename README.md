@@ -84,9 +84,9 @@ All deep learning metrics are reported as the mean and standard deviation across
 | **GRU (Raw Sequences, W=300)** | **Multi-Seed Holdout** | **4.27 ± 0.15** | **6.27 ± 0.07** | **0.957** |
 
 <p align="center">
-  <img src="assets/gru_prediction_trajectory.png" alt="GRU Prediction vs Ground Truth" width="700"/>
+  <img src="assets/gru_error_envelope.png" alt="Absolute Error over Operating Envelope" width="600"/>
   <br>
-  <em>Figure 3: Temporal tracking of the stator winding temperature by the GRU Soft-Sensor on an unseen test profile. The model successfully captures the thermal inertia and rapid transient dynamics without access to internal mass temperatures.</em>
+  <em>Figure 3: Absolute error distribution of the GRU Soft-Sensor projected onto the electromechanical phase space (Test Set). This topography demonstrates the model's high reliability across standard operating regimes, accurately localizing residual errors to extreme transient states.</em>
 </p>
 
 **Physical Interpretability (Permutation Importance):**
